@@ -1,4 +1,5 @@
 ---
 title: {{ title }}
-tags:
+tags: postgres
+categories: postgres
 ---

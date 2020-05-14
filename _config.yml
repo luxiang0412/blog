@@ -3,7 +3,7 @@
 ## Source: https://github.com/hexojs/hexo/
 
 # Site
-title: title
+title: record
 subtitle: 'subtitle'
 description: 'description'
 keywords:
@@ -95,7 +95,7 @@ ignore:
 # Extensions
 ## Plugins: https://hexo.io/plugins/
 ## Themes: https://hexo.io/themes/
-theme: landscape
+theme: yinwang
 
 # Deployment
 ## Docs: https://hexo.io/docs/deployment.html
