@@ -771,4 +771,5 @@ black_memqcache_table_list = ''
 - [Streaming_Replication](https://wiki.postgresql.org/wiki/Streaming_Replication)
 - [pgpool Wiki](https://www.pgpool.net/mediawiki/index.php/Main_Page)
 - [pgpool-II 4.1.1 document](https://www.pgpool.net/docs/latest/en/html/index.html)
+- [Pgpool-II + Watchdog Setup Example](https://www.pgpool.net/docs/latest/en/html/example-cluster.html)
 - [PGPool-II+PG流复制实现HA主备切换](https://www.jianshu.com/p/ef183d0a9213)
