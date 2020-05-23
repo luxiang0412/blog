@@ -8,25 +8,31 @@ categories: postgres
 - CentOS release 6.10
 - postgresql-9.4
 - pgpool-II 4.1.1
-- 准备两台机器
-    pmotest1    192.168.64.129  作为master主节点
-    pmotest2    192.168.64.130  作为slave从节点
+- 准备四台机器，作用分别如下
+    pmotest1    192.168.64.129  装postgres和pgpool
+    pmotest2    192.168.64.130  装postgres和pgpool
+    pmotest3    192.168.64.131  装pgpool
+    pmotest4    192.168.64.128  装pgpool
 - 一个虚拟ip
     vip         192.168.64.20
 
-### 安装postgres
+### 在pmotest1和pmotest2安装postgres
 ```
 yum install https://download.postgresql.org/pub/repos/yum/reporpms/EL-6-x86_64/pgdg-redhat-repo-latest.noarch.rpm
 yum install postgresql94
 yum install postgresql94-server
-service postgresql-9.4 initdb
-service postgresql-9.4 start
-chkconfig postgresql-9.4 on
 ```
 
 ### master节点初始化，配置
+初始化pmotest1的数据库文件，并启动pmotest1数据库
+```
+$ /etc/init.d/postgresql-9.4 initdb
+$ /etc/init.d/postgresql-9.4 start
+$ chkconfig postgresql-9.4 on
+```
 修改postgres密码，并添加repuser 用于流复制
 ```
+$ psql
 postgres=# ALTER USER postgres WITH PASSWORD 'postgres';
 postgres=# CREATE ROLE repuser WITH REPLICATION PASSWORD 'repuser' LOGIN;
 ```
@@ -41,11 +47,15 @@ host    replication     repuser         0.0.0.0/0               md5
 ```
 修改postgres.conf配置文件
 ```
+#监听
 listen_addresses = '*'
+#连接数
 max_connections = 500
 password_encryption = on
 wal_level = hot_standby
+#归档
 archive_mode = on
+#归档命令
 archive_command = 'cp %p /var/lib/pgsql/9.4/pg_archive/%f'
 max_wal_senders = 5
 wal_keep_segments = 32
@@ -61,11 +71,16 @@ export PATH=$PATH:$PGHOME/bin
 
 $ source /etc/profile
 ```
-    在maser 重新启动postgres数据库
-    在slave节点上，删除$PGDATA文件
+重新启动pmotest1的postgres（到此pmotest1的postgres配置完毕）
 ```
-#同步主节点数据文件
-$ /usr/bin/pg_basebackup -h 192.168.64.129 -D $PGDATA -P -U repuser --xlog-method=stream
+/etc/init.d/postgresql-9.4 restart
+```
+开始pmotest2的postgres配置，首先复制pmotest1的复制文件，命令如下（注意环境变量$PGDATA是否存在）
+```
+$ /usr/bin/pg_basebackup -h pmotest1 -D $PGDATA -P -U repuser --xlog-method=stream
+```
+配置recovery.conf文件
+```
 #创建recovery.conf文件
 
 standby_mode = on
@@ -74,13 +89,21 @@ trigger_file = '/var/lib/pgsql/9.4/tigger'
 recovery_target_timeline = 'latest'
 
 ```
+pmotest2的postgres配置完毕
 
-    测试热备，在slave节点上执行
+启动pmotest2的pg
 ```
+$ pg_ctl start
+```
+测试主备切换
+```
+#模拟master宕机（因为此时pmotest1是master，所以在pmotest1上执行如下命令）
+$ pg_ctl stop -m fast
+#开始模拟slave节点 升级为master节点
 $ $PGHOME/bin/pg_ctl promote -D $PGDATA
 ```
-    此时slave升级为主节点，现在测试将原来的master节点加入到slave
-    创建recovery.conf文件，与上面的类似，只是ip地址变了
+此时slave升级为主节点，现在将原来的master节点加入到集群
+创建recovery.conf文件，与上面的类似，只是ip地址变了
 ### pgpool-II功能
 - 连接池
 - 负载均衡
@@ -121,28 +144,25 @@ postgres:postgres
 ```
 $ pg_md5 -p -m -u postgres pool_passwd
 ```
-配置系统命令权限
+配置系统命令权限和文件夹
 ```
 $ which ip
 /sbin/ip
 $ chmod u+s /sbin/ip
 $ chmod u+s /sbin
 $ chmod u+s /usr/sbin/arping
+$ mkdir /var/log/pgpool /var/run/pgpool/
+$ chown -R postgres:postgres /var/log/pgpool
+$ chown -R postgres:postgres /var/run/pgpool/
 ```
 pgpool.conf配置
 ```
+#监听
 listen_addresses = '*'
-                                   # Host name or IP address to listen on:
-                                   # '*' for all, '' for no TCP/IP connections
-                                   # (change requires restart)
+#pgpool 对外连接的端口  也就是java 程序中需要填写的端口
 port = 9999
-                                   # Port number
-                                   # (change requires restart)
+#socket 路径
 socket_dir = '/tmp'
-                                   # Unix domain socket path
-                                   # The Debian package defaults to
-                                   # /var/run/postgresql
-                                   # (change requires restart)
 listen_backlog_multiplier = 2
                                    # Set the backlog parameter of listen(2) to
                                    # num_init_children * listen_backlog_multiplier.
@@ -166,20 +186,21 @@ pcp_socket_dir = '/tmp'
                                    # The Debian package defaults to
                                    # /var/run/postgresql
                                    # (change requires restart)
+#后端第一个postgres的hostname
 backend_hostname0 = 'pmotest1'
-                                   # Host name or IP address to connect to for backend 0
+#后端第一个postgres的端口
 backend_port0 = 5432
-                                   # Port number for backend 0
+#后端第一个postgres的权重
 backend_weight0 = 1
-                                   # Weight for backend 0 (only in load balancing mode)
+#后端第一个postgres的 PGDATA 数据目录
 backend_data_directory0 = '/var/lib/pgsql/9.4/data'
-                                   # Data directory for backend 0
+#后端第一个postgres的名称 通过命令show pool_nodes  展示的名称
+backend_application_name0 = 'pmotest1'
 backend_flag0 = 'ALLOW_TO_FAILOVER'
                                    # Controls various backend behavior
                                    # ALLOW_TO_FAILOVER, DISALLOW_TO_FAILOVER
                                    # or ALWAYS_MASTER
-backend_application_name0 = 'pmotest1'
-                                   # walsender's application_name, used for "show pool_nodes" command
+#同理第一个个后端postgres配置      
 backend_hostname1 = 'pmotest2'
 backend_port1 = 5432
 backend_weight1 = 1
@@ -383,25 +404,21 @@ statement_level_load_balance = off
 master_slave_mode = on
                                    # Activate master/slave mode
                                    # (change requires restart)
+#postgres复制模式  流复制
 master_slave_sub_mode = 'stream'
-                                   # Master/slave sub mode
-                                   # Valid values are combinations stream, slony
-                                   # or logical. Default is stream.
-                                   # (change requires restart)
+
 sr_check_period = 5
                                    # Streaming replication check period
                                    # Disabled (0) by default
+#流复制检查用户
 sr_check_user = 'repuser'
-                                   # Streaming replication check user
-                                   # This is necessary even if you disable
-                                   # streaming replication delay check with
-                                   # sr_check_period = 0
+
+#流复制检查密码
 sr_check_password = 'repuser'
-                                   # Password for streaming replication check user.
-                                   # Leaving it empty will make Pgpool-II to first look for the
-                                   # Password in pool_passwd file before using the empty password
+
+#流复制检查数据库
 sr_check_database = 'postgres'
-                                   # Database name for streaming replication check
+
 delay_threshold = 0
                                    # Threshold before not dispatching query to standby node
                                    # Unit is in bytes
@@ -428,14 +445,15 @@ health_check_period = 10
 health_check_timeout = 20
                                    # Health check timeout
                                    # 0 means no timeout
+#后端数据库健康检查用户
 health_check_user = 'postgres'
-                                   # Health check user
+
+#后端数据库健康检查密码
 health_check_password = 'postgres'
-                                   # Password for health check user
-                                   # Leaving it empty will make Pgpool-II to first look for the
-                                   # Password in pool_passwd file before using the empty password
+
+#后端数据库健康检查数据库名称
 health_check_database = 'postgres'
-                                   # Database name for health check. If '', tries 'postgres' frist, then 'template1'
+
 health_check_max_retries = 0
                                    # Maximum number of times to retry a failed health check before giving up.
 health_check_retry_delay = 1
@@ -446,6 +464,7 @@ connect_timeout = 10000
                                    # the value. 0 means no timeout.
                                    # Note that this value is not only used for health check,
                                    # but also for ordinary conection to backend.
+#对后端数据库健康检查失败的时候 执行的脚本，也就是当master节点宕机了，此时会从slave节点中选出一个hostname作为new_master,然后执行command new_master
 failover_command = '/etc/pgpool-II/failover_stream.sh %H'
                                    # Executes this command at failover
                                    # Special values:
@@ -530,13 +549,14 @@ trusted_servers = ''
 ping_path = '/bin'
                                     # ping command path
                                     # (change requires restart)
+#watchdog（个人理解就是一个监听器） 名称
 wd_hostname = 'pmotest1'
-                                    # Host name or IP address of this watchdog
-                                    # (change requires restart)
+
+#watchdog 端口
 wd_port = 9000
-                                    # port number for watchdog service
-                                    # (change requires restart)
-wd_priority = 3
+
+#watchdog 优先级（当获取虚拟ip的pgpool节点宕机了之后，通过选举选出新的pgpool master）
+wd_priority = 16
                                     # priority of this watchdog in leader election
                                     # (change requires restart)
 wd_authkey = ''
@@ -547,6 +567,7 @@ wd_ipc_socket_dir = '/tmp'
                                     # The Debian package defaults to
                                     # /var/run/postgresql
                                     # (change requires restart)
+#虚拟ip
 delegate_IP = '192.168.64.20'
                                     # delegate IP address
                                     # If this is empty, virtual IP never bring up.
@@ -555,12 +576,13 @@ if_cmd_path = '/sbin'
                                     # path to the directory where if_up/down_cmd exists
                                     # If if_up/down_cmd starts with "/", if_cmd_path will be ignored.
                                     # (change requires restart)
+#启动虚拟ip的命令
 if_up_cmd = '/sbin/ip addr add $_IP_$/24 dev eth0 label eth0:0'
-                                    # startup delegate IP command
-                                    # (change requires restart)
+
+#关闭虚拟ip的命令
 if_down_cmd = '/sbin/ip addr del $_IP_$/24 dev eth0'
-                                    # shutdown delegate IP command
-                                    # (change requires restart)
+
+
 arping_path = '/usr/sbin'
                                     # arping command path
                                     # If arping_cmd starts with "/", if_cmd_path will be ignored.
@@ -611,7 +633,7 @@ wd_monitoring_interfaces_list = ''  # Comma separated list of interfaces names t
 wd_lifecheck_method = 'heartbeat'
                                     # Method of watchdog lifecheck ('heartbeat' or 'query' or 'external')
                                     # (change requires restart)
-wd_interval = 10
+wd_interval = 5
                                     # lifecheck interval (sec) > 0
                                     # (change requires restart)
 wd_heartbeat_port = 9694
@@ -623,22 +645,23 @@ wd_heartbeat_keepalive = 2
 wd_heartbeat_deadtime = 30
                                     # Deadtime interval for heartbeat signal (sec)
                                     # (change requires restart)
+#其他pgpool watchdog 中的第一个节点的hostname
 heartbeat_destination0 = 'pmotest2'
-                                    # Host name or IP address of destination 0
-                                    # for sending heartbeat signal.
-                                    # (change requires restart)
+#其他pgpool watchdog 中的第一个节点的端口
 heartbeat_destination_port0 = 9694
-                                    # Port number of destination 0 for sending
-                                    # heartbeat signal. Usually this is the
-                                    # same as wd_heartbeat_port.
-                                    # (change requires restart)
+#其他pgpool watchdog 中的第一个节点的网卡名称
 heartbeat_device0 = 'eth0'
-                                    # Name of NIC device (such like 'eth0')
-                                    # used for sending/receiving heartbeat
-                                    # signal to/from destination 0.
-                                    # This works only when this is not empty
-                                    # and pgpool has root privilege.
-                                    # (change requires restart)
+
+#同上
+heartbeat_destination1 = 'pmotest3'
+heartbeat_destination_port1 = 9694
+heartbeat_device1 = 'eth0'
+
+#同上
+heartbeat_destination2 = 'pmotest4'
+heartbeat_destination_port2 = 9694
+heartbeat_device2 = 'eth0'
+
 wd_life_point = 3
                                     # lifecheck retry times
                                     # (change requires restart)
@@ -656,15 +679,21 @@ wd_lifecheck_password = ''
                                     # Leaving it empty will make Pgpool-II to first look for the
                                     # Password in pool_passwd file before using the empty password
                                     # (change requires restart)
+#其他的pgpool hostname
 other_pgpool_hostname0 = 'pmotest2'
-                                    # Host name or IP address to connect to for other pgpool 0
-                                    # (change requires restart)
 other_pgpool_port0 = 9999
-                                    # Port number for other pgpool 0
-                                    # (change requires restart)
 other_wd_port0 = 9000
-                                    # Port number for other watchdog 0
-                                    # (change requires restart)
+
+#同上
+other_pgpool_hostname1 = 'pmotest3'
+other_pgpool_port1 = 9999
+other_wd_port1 = 9000
+
+#同上
+other_pgpool_hostname2 = 'pmotest4'
+other_pgpool_port2 = 9999
+other_wd_port2 = 9000
+
 relcache_expire = 0
                                    # Life time of relation cache in seconds.
                                    # 0 means no cache expiration(the default).
@@ -757,9 +786,12 @@ black_memqcache_table_list = ''
                                    # Comma separated list of table names not to memcache
                                    # that don't write to database
                                    # Regexp are accepted
-
 ```
-#### 提示
+### 配置机器之间的ssh认证
+...省略
+### 附件
+[配置文件下载](postgres-流复制-pgpool-II-主从热备/相关的配置文件.tar)
+### 提示
 
     提示
     先启动pg数据库，然后再启动pgpool
