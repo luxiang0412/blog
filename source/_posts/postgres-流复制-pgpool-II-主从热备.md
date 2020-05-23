@@ -790,7 +790,7 @@ black_memqcache_table_list = ''
 ### 配置机器之间的ssh认证
 ...省略
 ### 附件
-[配置文件下载](postgres-流复制-pgpool-II-主从热备/相关的配置文件.tar)
+[配置文件下载](https://github.com/luxiang0412/blog/raw/master/source/_posts/postgres-%E6%B5%81%E5%A4%8D%E5%88%B6-pgpool-II-%E4%B8%BB%E4%BB%8E%E7%83%AD%E5%A4%87/%E7%9B%B8%E5%85%B3%E7%9A%84%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6.tar)
 ### 提示
 
     提示
