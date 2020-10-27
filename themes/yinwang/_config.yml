@@ -1,0 +1,32 @@
+# when running hexo in a subdirectory (e.g. domain.tld/blog), remove leading slashes ( "/archives" -> "archives" )
+
+version: 3.0
+# Place your favicon.ico to /source directory.
+favicon: /favicon.ico
+
+# Set default keywords (Use a comma to separate)
+keywords: luxiang.org,卢翔,卢翔的blog 
+
+# Code Highlight theme
+# Available value: normal | night | night eighties | night blue | night bright
+# https://github.com/chriskempson/tomorrow-theme
+highlight_theme: normal
+
+
+menu:
+  Blog: /
+  #categories: /categories
+  #archives: /archives
+  #tags: /tags
+  GitHub: https://github.com/luxiang0412
+
+
+
+# Static files
+#vendors: vendors
+css: css
+js: js
+images: images
+
+# Miscellaneous, enter the tracking ID for your Google Analytics
+google_analytics: 
