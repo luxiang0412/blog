@@ -123,7 +123,16 @@ vim hadoop/etc/hadoop/slaves
 vim hadoop/etc/hadoop/yarn-site.xml
 
 <configuration>
-<!-- Site specific YARN configuration properties -->
+    <property>
+        <name>yarn.nodemanager.pmem-check-enabled</name>
+        <value>false</value>
+    </property>
+
+    <property>
+        <name>yarn.nodemanager.vmem-check-enabled</name>
+        <value>false</value>
+    </property>
+    <!-- Site specific YARN configuration properties -->
     <property>
         <name>yarn.nodemanager.aux-services</name>
         <value>mapreduce_shuffle</value>
