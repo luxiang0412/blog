@@ -363,9 +363,9 @@ DSS_VERSION=0.9.0
 #用于指定xxxEM启动的所有引擎的客户端的总内存
 wds.linkis.enginemanager.memory.max=8G
 #用于指定xxxEM启动的所有引擎的客户端的总CPU核数
-wds.linkis.enginemanager.cores.max=4
+wds.linkis.enginemanager.cores.max=8
 #用于指定xxxEM可以启动的引擎个数
-wds.linkis.enginemanager.engine.instances.max=4
+wds.linkis.enginemanager.engine.instances.max=8
 ```
 
 ## 5.dss启动
