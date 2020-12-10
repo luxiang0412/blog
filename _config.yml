@@ -116,5 +116,5 @@ feed:
 ## Docs: https://hexo.io/docs/deployment.html
 deploy:
   type: git
-  repo: https://github.com/luxiang0412/luxiang0412.github.io.git
+  repo: git@github.com:luxiang0412/luxiang0412.github.io.git
   branch: master
