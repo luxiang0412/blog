@@ -1,7 +1,7 @@
 ---
 title: dss部署
 date: 2020-12-08 09:53:04
-tags: dss
+tags: "dss"
 ---
 
 # dss部署
@@ -11,7 +11,7 @@ tags: dss
 - scala-2.11.8.tgz
 - hadoop-2.7.2.tar.gz
 - apache-hive-1.2.1-bin.tar.gz
-- spark-2.4.3-bin-hadoop2.7.tgz
+- spark-2.4.3-bin-hadoop2.7.2.tgz（自行编译）
 - dss_linkis.zip
 - mysql-connector-java-5.1.44.jar
 

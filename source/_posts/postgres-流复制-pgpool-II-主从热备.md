@@ -1,8 +1,8 @@
 ---
 title: postgres 流复制 + pgpool-II 主从热备
 date: 2020-05-17 15:06:37
-tags: postgres
-categories: postgres
+tags: "postgres"
+categories: "postgres"
 ---
 ### 环境准备
 - CentOS release 6.10

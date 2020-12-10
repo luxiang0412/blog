@@ -19,6 +19,8 @@ menu:
   #archives: /archives
   #tags: /tags
   GitHub: https://github.com/luxiang0412
+  #RSS订阅
+  RSS: /atom.xml
 
 
 

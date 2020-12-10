@@ -1,8 +1,8 @@
 ---
 title: tomcat redis session 共享
 date: 2020-05-16 12:44:33
-tags: tomcat
-categories: tomcat
+tags: "tomcat"
+categories: "tomcat"
 ---
 ### 环境准备
 - apache-tomcat-8.5.54
