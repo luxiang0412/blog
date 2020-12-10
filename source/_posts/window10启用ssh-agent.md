@@ -30,3 +30,4 @@ PS> [Environment]::SetEnvironmentVariable("GIT_SSH", "$((Get-Command ssh).Source
 # 参考
 
 - [openssh_keymanagement](https://docs.microsoft.com/en-us/windows-server/administration/openssh/openssh_keymanagement)
+- [install_OpenSSH](https://docs.microsoft.com/en-us/windows-server/administration/openssh/openssh_install_firstuse)
