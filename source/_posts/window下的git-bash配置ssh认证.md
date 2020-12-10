@@ -4,6 +4,8 @@ date: 2020-12-10 17:33:50
 tags:
 ---
 
+# 配置
+
 git使用密码不方便。下面是window下git bash使用ssh认证
 
 ```bash
@@ -50,3 +52,7 @@ fi
 
 unset env
 ```
+
+# 参考
+
+- [auto_ssh](https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/working-with-ssh-key-passphrases#auto-launching-ssh-agent-on-git-for-windows)

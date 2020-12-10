@@ -27,3 +27,6 @@ Window下的git bash中ssh-agent和window系统中的ssh-agent不是同一个。
 ```
 PS> [Environment]::SetEnvironmentVariable("GIT_SSH", "$((Get-Command ssh).Source)", [System.EnvironmentVariableTarget]::User)
 ```
+# 参考
+
+- [openssh_keymanagement](https://docs.microsoft.com/en-us/windows-server/administration/openssh/openssh_keymanagement)
