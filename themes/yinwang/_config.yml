@@ -10,7 +10,7 @@ keywords: luxiang.org,卢翔,卢翔的blog
 # Code Highlight theme
 # Available value: normal | night | night eighties | night blue | night bright
 # https://github.com/chriskempson/tomorrow-theme
-highlight_theme: normal
+highlight_theme: night
 
 
 menu:
@@ -32,3 +32,7 @@ images: images
 
 # Miscellaneous, enter the tracking ID for your Google Analytics
 google_analytics: 
+
+custom_file_path:
+  bodyEnd: source/_data/body-end.swig
+  style: source/_data/styles.styl
