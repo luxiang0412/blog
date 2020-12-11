@@ -97,7 +97,7 @@ ignore:
 ## Themes: https://hexo.io/themes/
 theme: yinwang
 
-#RSS订阅
+#RSS订阅 npm install hexo-generator-feed --save
 feed:
   enable: true
   type: atom
