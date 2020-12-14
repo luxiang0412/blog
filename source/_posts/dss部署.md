@@ -1,12 +1,22 @@
 ---
-title: dss部署
+title: DSS部署说明
 date: 2020-12-08 09:53:04
 tags: "dss"
 ---
 
-# dss部署
+# DSS部署说明
 
-安装包
+依赖项以及安装包：
+
+|名称|版本|安装包名称|
+|:---|:---|:---|
+|jdk|1.8|jdk-8u211-linux-x64.tar.gz|
+|scala|2.11.8|scala-2.11.8.tgz|
+|hadoop|2.7.2|hadoop-2.7.2.tar.gz|
+|hive|1.2.1|apache-hive-1.2.1-bin.tar.gz|
+|spark|2.4.3|spark-2.4.3-bin-2.7.2hive.tgz|
+|xx|xx|xx|
+|xx|xx|xx|
 
 - scala-2.11.8.tgz
 - hadoop-2.7.2.tar.gz
@@ -251,7 +261,7 @@ cp $HIVE_HOME/lib/mysql-connector-java-5.1.44.jar $SPARK_HOME/jars/
 spark/bin/spark-shell --jars $SPARK_HOME/jars/mysql-connector-java-5.1.44.jar
 ```
 
-## 4.dss安装
+## 4.DSS安装
 
 依赖项：
 
@@ -261,7 +271,7 @@ spark/bin/spark-shell --jars $SPARK_HOME/jars/mysql-connector-java-5.1.44.jar
 - dos2unix
 
 ```bash
-#安装dss需要的工具
+#安装DSS需要的工具
 yum install 
 
 #解压dss_linkis.zip
@@ -368,7 +378,7 @@ wds.linkis.enginemanager.cores.max=8
 wds.linkis.enginemanager.engine.instances.max=8
 ```
 
-## 5.dss启动
+## 5.DSS启动
 
 ```
 sh bin/start-all.sh
