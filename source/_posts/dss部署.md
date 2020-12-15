@@ -656,4 +656,6 @@ sh bin/start-all.sh
 
 2.数据库刷不出来，hive终端授权`grant all on database default to user hadoop;`
 
+3.获取Yarn队列信息异常将linkis-resourcemanager-server-0.9.4.jar包替换一下
+
 
