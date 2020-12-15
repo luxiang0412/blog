@@ -311,7 +311,7 @@ tar -zxvf hadoop-2.7.2.tar.gz
 ln -s hadoop-2.7.2 hadoop
 
 ```
-#修改core-site.xml  
+修改core-site.xml  
 `vim hadoop/etc/hadoop/core-site.xml`
 ```xml
 <configuration>
@@ -334,7 +334,7 @@ export JAVA_HOME=/usr/local/java
 export HADOOP_CONF_DIR=/usr/local/hadoop/etc/hadoop
 ```
 
-#修改hdfs-site.xml  
+修改hdfs-site.xml  
 `vim hadoop/etc/hadoop/hdfs-site.xml`
 ```xml
 <configuration>
