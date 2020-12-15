@@ -10,16 +10,16 @@ tags: "dss"
 
 |名称|版本|安装包名称|
 |:---|:---|:---|
-|jdk|1.8|jdk-8u211-linux-x64.tar.gz|
-|scala|2.11.8|scala-2.11.8.tgz|
-|nginx|1.18|nginx-1.18.0-1.el7.ngx.x86_64.rpm|
-|hadoop|2.7.2|hadoop-2.7.2.tar.gz|
-|hive|1.2.1|apache-hive-1.2.1-bin.tar.gz|
-|spark|2.4.3|spark-2.4.3-bin-2.7.2hive.tgz|
-|centos7.6|7.6|CentOS-7-x86_64-Minimal-1810.iso|
+|JDK|1.8|jdk-8u211-linux-x64.tar.gz|
+|Scala|2.11.8|scala-2.11.8.tgz|
+|Nginx|1.18|nginx-1.18.0-1.el7.ngx.x86_64.rpm|
+|Hadoop|2.7.2|hadoop-2.7.2.tar.gz|
+|Hive|1.2.1|apache-hive-1.2.1-bin.tar.gz|
+|Spark|2.4.3|spark-2.4.3-bin-2.7.2hive.tgz|
+|Centos7.6|7.6|CentOS-7-x86_64-Minimal-1810.iso|
 |dss_linkis.zip|`Linkis_0.9.4`,`dss0.9.0`|dss_linkis.zip|
-|mysql|5.7|-|
-|docker|19.03|-|
+|Mysql|5.7|-|
+|Docker|19.03|-|
 |docker-compose|-|-|
 
 ---
@@ -123,7 +123,7 @@ yum clean all
 yum makecache fast
 ```
 
-## java，scala，nginx安装
+## Java，Scala，Nginx安装
 
 安装java  
 
@@ -182,13 +182,10 @@ systemctl start nginx
 
 #开机启动
 systemctl enable nginx
-
-#将hadoop用户添加到nginx组里面去
-sudo usermod -G hadoop,nginx hadoop
 ```
 ---
 
-## docker安装
+## Docker安装
 
 ```bash
 #如果有安装docker，先remove
@@ -227,7 +224,7 @@ systemctl start docker
 systemctl enable docker
 ```
 
-## mysql安装和初始化
+## Mysql安装和初始化
 
 ```bash
 #创建mysql目录
@@ -279,7 +276,7 @@ create database dss default character set utf8mb4 collate utf8mb4_unicode_ci;
 create database hive default character set utf8mb4 collate utf8mb4_unicode_ci;
 ```
 
-## hadoop,hive,spark环境变量配置
+## Hadoop,Hive,Spark环境变量配置
 
 ```bash
 # 环境变量
@@ -300,9 +297,9 @@ export SPARK_CONF_DIR=$SPARK_HOME/conf
 export PATH=$HADOOP_HOME/bin:$HADOOP_HOME/sbin:$SPARK_HOME/bin:$HIVE_HOME/bin:$PATH
 ```
 
-**请保持hadoop，hive，spark的软链接目录和安装目录权限都是hadoop，包括后边复制的jar包，执行初始化等等**
+**请保持Hadoop，Hive，Spark的软链接目录和安装目录权限都是hadoop，包括后边复制的jar包，执行初始化等等**
 
-## 安装hadoop
+## 安装Hadoop
 
 ```bash
 # 解压hadoop包
@@ -447,7 +444,7 @@ hadoop/sbin/start-dfs.sh
 hadoop/sbin/start-yarn.sh
 ```
 
-## 安装hive
+## 安装Hive
 
 ```bash
 # 解压hive包
@@ -498,11 +495,11 @@ chown -R hadoop:hadoop $HIVE_HOME/lib/mysql-connector-java-5.1.44.jar
 hive/bin/schematool -dbType mysql -initSchema
 ```
 
-## 安装spark
+## 安装Spark
 
 ```bash
 # 解压spark包
-tar -zxvf spark-2.4.3-bin-hadoop2.7.tgz
+tar -zxvf spark-2.4.3-bin-2.7.2hive.tgz
 # 创建软链接
 ln -s spark-2.4.3-bin-hadoop2.7 spark
 
