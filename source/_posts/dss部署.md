@@ -511,7 +511,13 @@ vim spark/conf/spark-env.sh
 export SPARK_MASTER_IP=centos7test #主机名
 export SPARK_WORKER_CORES=2
 export SPARK_WORKER_MEMORY=2g
+
+#hadoop home和config
+export HADOOP_HOME=/usr/local/hadoop
 export HADOOP_CONF_DIR=$HADOOP_HOME/etc/hadoop
+#hive home和config
+export HIVE_HOME=/usr/local/hive
+export HIVE_CONF_DIR=$HIVE_HOME/conf
 
 #修改slaves
 cp spark/conf/slaves.template spark/conf/slaves
@@ -521,6 +527,9 @@ centos7test
 #复制mysql驱动到$SPARK_HOME/jars/下
 cp $HIVE_HOME/lib/mysql-connector-java-5.1.44.jar $SPARK_HOME/jars/ && \
 chown -R hadoop:hadoop $SPARK_HOME/jars/mysql-connector-java-5.1.44.jar
+
+#将hive的配置文件复制到spark配置目录下面
+cp $HIVE_HOME/conf/hive-site.xml $SPARK_HOME/conf/
 
 #启动spark-shell
 spark/bin/spark-shell --jars $SPARK_HOME/jars/mysql-connector-java-5.1.44.jar
