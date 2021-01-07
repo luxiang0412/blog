@@ -538,8 +538,8 @@ centos7test
 cp $HIVE_HOME/lib/mysql-connector-java-5.1.44.jar $SPARK_HOME/jars/ && \
 chown -R hadoop:hadoop $SPARK_HOME/jars/mysql-connector-java-5.1.44.jar
 
-#将hive的配置文件复制到spark配置目录下面
-cp $HIVE_HOME/conf/hive-site.xml $SPARK_HOME/conf/
+#将hive的配置文件 创建软连接 spark配置目录下面
+ln -s $HIVE_HOME/conf/hive-site.xml $SPARK_HOME/conf/hive-site.xml
 
 #启动spark-shell
 spark/bin/spark-shell --jars $SPARK_HOME/jars/mysql-connector-java-5.1.44.jar
