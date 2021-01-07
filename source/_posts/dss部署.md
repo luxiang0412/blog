@@ -534,9 +534,8 @@ cp spark/conf/slaves.template spark/conf/slaves
 vim spark/conf/slaves
 centos7test
 
-#复制mysql驱动到$SPARK_HOME/jars/下
-cp $HIVE_HOME/lib/mysql-connector-java-5.1.44.jar $SPARK_HOME/jars/ && \
-chown -R hadoop:hadoop $SPARK_HOME/jars/mysql-connector-java-5.1.44.jar
+#复制mysql驱动 链接到 $SPARK_HOME/jars/下
+ln -s $HIVE_HOME/lib/mysql-connector-java-5.1.44.jar $SPARK_HOME/jars/mysql-connector-java-5.1.44.jar
 
 #将hive的配置文件 创建软连接 spark配置目录下面
 ln -s $HIVE_HOME/conf/hive-site.xml $SPARK_HOME/conf/hive-site.xml
