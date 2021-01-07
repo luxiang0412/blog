@@ -391,6 +391,16 @@ vim hadoop/etc/hadoop/yarn-site.xml
 ```
 ```xml
 <configuration>
+    <!--内存限制 16G-->
+    <property>
+        <name>yarn.nodemanager.resource.memory-mb</name>
+        <value>16384</value>
+    </property>
+    <!--cpu限制 16核-->
+    <property>
+        <name>yarn.nodemanager.resource.cpu-vcores</name>
+        <value>16</value>
+    </property>
     <property>
         <name>yarn.nodemanager.pmem-check-enabled</name>
         <value>false</value>
