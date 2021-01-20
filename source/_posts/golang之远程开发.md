@@ -93,3 +93,4 @@ go get github.com/beego/bee
 - [golang](https://golang.google.cn)
 - [goproxy](https://goproxy.cn)
 - [remote-development](https://code.visualstudio.com/blogs/2019/05/02/remote-development)
+- [troubleshooting](https://code.visualstudio.com/docs/remote/troubleshooting)
