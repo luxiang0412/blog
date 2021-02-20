@@ -53,10 +53,12 @@ highlight:
   tab_replace: ""
   wrap: true
   hljs: false
-flowchart:
-  raphael:   # optional, the source url of raphael.js
-  flowchart: # optional, the source url of flowchart.js
-  options: # options used for `drawSVG`
+# mermaid chart
+mermaid: ## mermaid url https://github.com/knsv/mermaid
+  enable: true  # default true
+  version: "7.1.2" # default v7.1.2
+  options:  # find more api options from https://github.com/knsv/mermaid/blob/master/src/mermaidAPI.js
+    #startOnload: true  // default true
 
 # Home page setting
 # path: Root path for your blogs index page. (default = '')
