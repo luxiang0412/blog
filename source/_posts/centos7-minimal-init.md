@@ -15,7 +15,7 @@ sed -i 's#http#https#g' /etc/yum.repos.d/epel.repo
 Base镜像替换
 ```bash
 mv /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.backup && \
-curl -o /etc/yum.repos.d/CentOS-Base.repo https://mirrors.aliyun.com/repo/Centos-6.repo && \
+curl -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo && \
 sed -i 's#http#https#g' /etc/yum.repos.d/CentOS-Base.repo
 ```
 
