@@ -16,7 +16,6 @@ Base镜像替换
 ```bash
 mv /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.backup && \
 curl -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo && \
-sudo sed -i 's+download.docker.com+mirrors.tuna.tsinghua.edu.cn/docker-ce+' /etc/yum.repos.d/docker-ce.repo && \
 sed -i 's#http#https#g' /etc/yum.repos.d/CentOS-Base.repo
 ```
 
@@ -28,6 +27,7 @@ docker-ce
 ```bash
 yum install -y yum-utils device-mapper-persistent-data lvm2 && \
 yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo && \
+sudo sed -i 's+download.docker.com+mirrors.tuna.tsinghua.edu.cn/docker-ce+' /etc/yum.repos.d/docker-ce.repo && \
 yum makecache fast && \
 yum -y install docker-ce
 ```
