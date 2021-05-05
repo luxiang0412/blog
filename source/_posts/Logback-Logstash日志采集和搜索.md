@@ -240,6 +240,87 @@ nohup /usr/local/logstash/bin/logstash -f pipeline/logstash.conf >> /usr/local/l
 pkill -F /usr/local/logstash/pid
 ```
 
+elasticsearch-5x.json 索引模板
+
+```json
+{
+    "template": "logstash-*",
+    "version": 50001,
+    "settings": {
+        "index.refresh_interval": "5s"
+    },
+    "mappings": {
+        "_default_": {
+            "_all": {
+                "enabled": true,
+                "norms": false
+            },
+            "dynamic_templates": [
+                {
+                    "message_field": {
+                        "path_match": "message",
+                        "match_mapping_type": "string",
+                        "mapping": {
+                            "type": "text",
+                            "norms": false,
+                            "analyzer": "ik_max_word",
+                            "fields": {
+                                "keyword": {
+                                    "type": "keyword"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "string_fields": {
+                        "match": "*",
+                        "match_mapping_type": "string",
+                        "mapping": {
+                            "type": "text",
+                            "norms": false,
+                            "fields": {
+                                "keyword": {
+                                    "type": "keyword",
+                                    "ignore_above": 256
+                                }
+                            }
+                        }
+                    }
+                }
+            ],
+            "properties": {
+                "@timestamp": {
+                    "type": "date",
+                    "include_in_all": false
+                },
+                "@version": {
+                    "type": "keyword",
+                    "include_in_all": false
+                },
+                "geoip": {
+                    "dynamic": true,
+                    "properties": {
+                        "ip": {
+                            "type": "ip"
+                        },
+                        "location": {
+                            "type": "geo_point"
+                        },
+                        "latitude": {
+                            "type": "half_float"
+                        },
+                        "longitude": {
+                            "type": "half_float"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
 pipeline/logstash.conf
 ```
 input {
@@ -247,7 +328,7 @@ input {
         port => 4560
         codec => json_lines
     }
-
+    
     tcp {
         port => 4561
         codec => json_lines
@@ -259,6 +340,9 @@ output {
         hosts => ["http://192.168.33.4:9200"]
         index => "logstash-%{+YYYY.MM.dd}"
         template_name => "logstash"
+        template => "/usr/local/logstash/config/elasticsearch-5x.json"
+        template_overwrite => true
+        manage_template => true
         user => "elastic"
         password => "111111"
     }
@@ -289,12 +373,23 @@ output {
 application.yml（多个logstash地址用逗号隔开）
 
 ```yml
+spring:
+  application:
+    # 应用名称
+    name: sub-system-a
+# logstash TCP 端口（logstash是无状态的，可以横向扩展）
 logstash.address: |
   192.168.33.4:4560,
   192.168.33.4:4561
 ```
 
 logback-spring.xml
+下面的配置文件需要修改的地方：
+
+- `<listener class="com.sd.promalertwebhook.listen.logback.MyTcpAppenderListener"/>`
+- log level根据实际情况调整
+- 日志大小，保存天数，最大大小等；需要更具实际情况调整。
+
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
