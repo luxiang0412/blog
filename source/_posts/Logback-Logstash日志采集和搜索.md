@@ -320,7 +320,7 @@ logback-spring.xml
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
             <version>5.5.0</version>
             <!-- 自定义字段 添加项目名称 -->
-            <customFields>{"project_name": "${spring.application.name}"}</customFields>
+            <customFields>{"application_name": "${spring.application.name}"}</customFields>
             <includeContext>false</includeContext>
         </encoder>
 
