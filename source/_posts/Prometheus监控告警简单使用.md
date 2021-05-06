@@ -28,6 +28,31 @@ tags:
 
 ## 安装和配置
 
+文件目录如下：
+
+```
+├── alertsnitch
+│   └── mysql
+│       ├── 0.0.1-bootstrap.sql
+│       └── 0.1.0-fingerprint.sql
+├── altermanager_conf
+│   └── altermanager.yml
+├── docker-compose.yml
+├── prometheus_conf
+│   ├── instance.alerts.yml
+│   ├── prometheus.yml
+│   └── test.yml
+└── prometheus-webhook-dingtalk
+    ├── config.yml
+    └── templates
+        ├── default.tmpl
+        ├── issue43
+        │   └── template.tmpl
+        └── legacy
+            └── template.tmpl
+
+```
+
 ### Prometheus配置
 
 配置说明

@@ -265,6 +265,10 @@ elasticsearch-5x.json 索引模板
                             "norms": false,
                             "analyzer": "ik_max_word",
                             "fields": {
+                                "suggest": {
+                                    "type": "completion",
+                                    "analyzer": "ik_max_word"
+                                },
                                 "keyword": {
                                     "type": "keyword"
                                 }
@@ -355,6 +359,8 @@ output {
 
 ## spring-boot和logstash-logback-encoder配置
 
+可以参考项目[metrics-demo](http://10.7.200.214:8929/luxiang/metrics-demo/-/blob/master/prom-alert-webhook/src/main/resources/logback-spring.xml)的配置
+
 引入依赖
 ```xml
 <dependency>
@@ -401,7 +407,7 @@ logback-spring.xml
                     defaultValue=""/>
 
     <!--日志存放路径-->
-    <property name="log.path" value="${user.home}/logs/metrics-demo/${spring.application.name}"/>
+    <property name="log.path" value="${user.home}/logs/${spring.application.name}"/>
 
     <!--日志文件最大大小（字节）-->
     <property name="file.max-filesize" value="100MB"/>
@@ -543,3 +549,4 @@ logback-spring.xml
 - [Logstash](https://www.elastic.co/guide/en/logstash/5.5/index.html)
 - [logstash-logback-encoder](https://github.com/logstash/logstash-logback-encoder)
 - [Logback configuration](http://logback.qos.ch/manual/configuration.html)
+- [vscode-logstash-editor](https://marketplace.visualstudio.com/items?itemName=fbaligand.vscode-logstash-editor#review-details)
