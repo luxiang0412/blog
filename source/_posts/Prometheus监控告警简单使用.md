@@ -26,9 +26,30 @@ tags:
 
     集成Mysql或者Postgres，将告警信息存储到数据库。
 
+## 环境说明
+
+**注意：**prom-alert-webhook，sub-system-a，sub-system-b这三个应用是另外一个项目[metrics-demo](http://10.7.200.214:8929/luxiang/metrics-demo)的子模块，作为测试用。每个子模块通过路径`/actuator/prometheus`获取metrics。
+
+|IP|说明|
+|:---|:---|
+|192.168.33.1|-|
+|192.168.33.4|-|
+
+|服务/应用|IP|端口|类型|Metrics Path|说明|
+|:---|:---|:---|:---|:---|:---|
+|Prometheus|192.168.33.4|9090|服务|`/metrics`|-|
+|Grafana|192.168.33.4|3000|服务|`/metrics`|-|
+|Alertmanager|192.168.33.4|9093|服务|`/metrics`|-|
+|prometheus-webhook-dingtalk|192.168.33.4|8060|服务|无|-|
+|alertsnitch|192.168.33.4|9567|服务|`/metrics`|-|
+|prom-alert-webhook|192.168.33.1|8084|应用|`/actuator/prometheus`|-|
+|sub-system-a|192.168.33.1|8081|应用|`/actuator/prometheus`|-|
+|sub-system-b|192.168.33.1|8082|应用|`/actuator/prometheus`|-|
+
+
 ## 安装和配置
 
-文件目录如下：
+文件目录(prometheus_alert)如下：
 
 ```
 ├── alertsnitch
@@ -53,50 +74,40 @@ tags:
 
 ```
 
+首先拉取镜像：
+
+```bash
+docker pull prom/prometheus:v2.26.0 && \
+  docker pull prom/alertmanager:v0.21.0 && \
+  docker pull grafana/grafana:7.5.5 && \
+  docker pull timonwong/prometheus-webhook-dingtalk:latest && \
+  docker pull luxiang0412/alertsnitch:0.2.1
+```
+
+进入文件目录(prometheus_alert)的根下：
+
+`cd prometheus_alert`
+
+**下面操作都是在prometheus_alert目录下进行**
+
 ### Prometheus配置
 
 配置说明
 
+检查prometheus.yml格式是否正确
+
+```bash
+docker run --rm -it --entrypoint='' -v "$PWD/prometheus_conf:/etc/prometheus_conf" prom/prometheus:v2.26.0 promtool check config /etc/prometheus_conf/prometheus.yml
+```
+
 prometheus.yml
 
-`promtool check config prometheus.yml`检查配置文件格式是否正确
-
 ```yml
+# 全局配置
 global:
-  # 抓取指标的频率 默认是1m
-  scrape_interval: 15s
-
-  # 抓取指标超时设置 默认10s
-  scrape_timeout: 15s
-
-  # 规则配置计算间隔 默认1m
-  evaluation_interval: 10s
-
-  # 额外的标签
-  external_labels:
-    # 标签名称和标签对应的值
-    company: shudao
-
-# 规则文件
-rule_files:
-    # 文件路径
-  - "/etc/prometheus_conf/instance.alerts.yml"
-
-# 抓取配置
-scrape_configs:
-  # Job名称
-  - job_name: "prometheus"
-    # 访问路径
-    metrics_path: "/metrics"
-    # schema
-    scheme: "http"
-    # Job抓取配置
-    static_configs:
-        # IP:端口
-      - targets: ["192.168.33.4:9090"]
-        # 标签列表
-        labels:
-          ip_address: "192.168.33.4"
+  scrape_interval: 15s # 抓取指标的间隔
+  evaluation_interval: 15s # 计算规则的间隔
+  scrape_timeout: 10s #抓取指标超时时间
 
 # Alertmanager配置
 alerting:
@@ -104,96 +115,183 @@ alerting:
     - static_configs:
         - targets:
             - 192.168.33.4:9093
+
+# 规则文件
+rule_files:
+  - "/etc/prometheus_conf/instance.alerts.yml"
+
+# 抓取配置
+scrape_configs:
+  # 名称
+  - job_name: "prometheus"
+    metrics_path: "/metrics"
+    scheme: "http"
+    static_configs:
+      - targets: ["192.168.33.4:9090"]
+        labels:
+          ip_address: "192.168.33.4"
+  # 名称
+  - job_name: "application"
+    metrics_path: "/actuator/prometheus"
+    scheme: "http"
+    static_configs:
+      - targets: ["192.168.33.1:8081"]
+        labels:
+          ip_address: "192.168.33.1"
+          type: "application"
+      - targets: ["192.168.33.1:8082"]
+        labels:
+          ip_address: "192.168.33.1"
+          type: "application"
+      - targets: ["192.168.33.1:8084"]
+        labels:
+          ip_address: "192.168.33.1"
+          type: "application"
+
+```
+
+检查rules.yml格式是否正确
+
+```bash
+docker run --rm -it --entrypoint='' -v "$PWD/prometheus_conf:/etc/prometheus_conf" prom/prometheus:v2.26.0 promtool check rules /etc/prometheus_conf/instance.alerts.yml
 ```
 
 instance.alerts.yml
-`promtool check rules instance.alerts.yml`检查规则格式是否正确
 
 ```yml
+# This is the rules file.
+
 groups:
-- name: Instance
-  rules:
+  - name: Instance
+    rules:
+      - alert: InstanceDown
+        expr: up == 0
+        for: 5s
+        labels:
+          severity: page
+        annotations:
+          summary: "Instance {{ $labels.instance }} down"
+          description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 5 minutes."
+    # 组名
+  - name: SdService
+    # 规则
+    rules:
+      # 警报名称
+      - alert: SdServiceDown
+        # 表达式
+        expr: sd_service_status == 0
+        # 持续时间(如果expr为真，且时间大于for的值则触发警报)
+        for: 5s
+        labels:
+          severity: page
+        annotations:
+          summary: "sd service {{ $labels.application}} down "
+          description: "sd service {{ $labels.application}} down"
 
-    # 告警名称
-  - alert: InstanceDown
-    # 触发告警的表达式
-    expr: up == 0
-    # Down持续5s则出发告警
-    for: 5s
-    # 标签
-    labels:
-        severity: page
-    # 注解
-    annotations:
-        # 告警概要 golang template
-        summary: "Instance {{ $labels.instance }} down"
-        # 告警详情 golang template
-        description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 5 minutes."
+```
 
-    # 同上
-  - alert: AnotherInstanceDown
-    expr: up == 0
-    for: 10s
-    labels:
-        severity: page
-    annotations:
-        summary: "Instance {{ $labels.instance }} down"
-        description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 5 minutes."
+测试告警规则
+
+```bash
+docker run --rm -it --entrypoint='' -v "$PWD/prometheus_conf:/etc/prometheus_conf" prom/prometheus:v2.26.0 promtool test rules /etc/prometheus_conf/test.yml
 ```
 
 test.yml rules测试
-`promtool test rules test.yml`测试告警规则
 
 ```yml
-# 测试的规则文件
-rule_files:
-    - /etc/prometheus_conf/instance.alerts.yml
+# This is the main input for unit testing.
+# Only this file is passed as command line argument.
 
-# 计算间隔
+rule_files:
+  - /etc/prometheus_conf/instance.alerts.yml
+
 evaluation_interval: 1m
 
-# 测试列表
 tests:
-    # Test 1.
-    - interval: 1m
-      # Series data.
-      # 输入的数据
-      input_series:
-          - series: 'up{job="prometheus", instance="192.168.33.4:9090"}'
-            values: '0 0 0 0 0 0 0 0 0 0 0 0 0 0 0'
-          - series: 'up{job="node_exporter", instance="localhost:9100"}'
-            values: '1+0x6 0 0 0 0 0 0 0 0' # 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0
-          - series: 'go_goroutines{job="prometheus", instance="192.168.33.4:9090"}'
-            values: '10+10x2 30+20x5' # 10 20 30 30 50 70 90 110 130
-          - series: 'go_goroutines{job="node_exporter", instance="localhost:9100"}'
-            values: '10+10x7 10+30x4' # 10 20 30 40 50 60 70 80 10 40 70 100 130
-
-      # Unit test for alerting rules.
-      alert_rule_test:
-          # Unit test 1.
-          - eval_time: 10m
-            alertname: InstanceDown
-            exp_alerts:
-                # Alert 1.
-                - exp_labels:
-                      severity: page
-                      instance: 192.168.33.4:9090
-                      job: prometheus
-                  exp_annotations:
-                      summary: "Instance 192.168.33.4:9090 down"
-                      description: "192.168.33.4:9090 of job prometheus has been down for more than 5 minutes."
-      # Unit tests for promql expressions.
-      promql_expr_test:
-          # Unit test 1.
-          - expr: go_goroutines > 5
-            eval_time: 4m
-            exp_samples:
-                # Sample 1.
-                - labels: 'go_goroutines{job="prometheus",instance="192.168.33.4:9090"}'
-                  value: 50
-                # Sample 2.
-                - labels: 'go_goroutines{job="node_exporter",instance="192.168.33.4:9100"}'
-                  value: 50
+  # Test 1.
+  - name: Test-1
+    interval: 1m
+    # Series data.
+    input_series:
+      - series: 'up{instance="192.168.33.4:9090", ip_address="192.168.33.4", job="prometheus"}'
+        values: "1+0x6 0 0 0 0 0 0 0 0" # 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0
+      - series: 'go_goroutines{instance="192.168.33.4:9090", ip_address="192.168.33.4", job="prometheus"}'
+        values: "10+10x2 30+20x5" # 10 20 30 30 50 70 90 110 130
+      - series: 'sd_service_status{application="prom-alert-webhook", instance="192.168.33.1:8084", ip_address="192.168.33.1", job="application", type="application"}'
+        values: "1+0x5 0+0x5" # 1 1 1 1 1 1 0 0 0 0 0 0
+      - series: 'sd_service_status{application="sub-system-a", instance="192.168.33.1:8081", ip_address="192.168.33.1", job="application", type="application"}'
+        values: "1+0x5 0+0x5" # 1 1 1 1 1 1 0 0 0 0 0 0
+      - series: 'sd_service_status{application="sub-system-b", instance="192.168.33.1:8082", ip_address="192.168.33.1", job="application", type="application"}'
+        values: "1+0x5 0+0x5" # 1 1 1 1 1 1 0 0 0 0 0 0
+    # Unit test for alerting rules.
+    alert_rule_test:
+      # Unit test 1.
+      - eval_time: 10m
+        alertname: InstanceDown
+        exp_alerts:
+          # Alert 1.
+          - exp_labels:
+              severity: page
+              instance: 192.168.33.4:9090
+              job: prometheus
+              ip_address: 192.168.33.4
+            exp_annotations:
+              summary: "Instance 192.168.33.4:9090 down"
+              description: "192.168.33.4:9090 of job prometheus has been down for more than 5 minutes."
+      # sd service alert 单元测试
+      - eval_time: 10m
+        alertname: SdServiceDown
+        exp_alerts:
+          # service prom-alert-webhook 当alert的label和annotations 和 下面预期的一样则通过test
+          - exp_labels:
+              severity: page
+              instance: 192.168.33.1:8084
+              job: application
+              ip_address: 192.168.33.1
+              application: prom-alert-webhook
+              type: application
+            exp_annotations:
+              summary: "sd service prom-alert-webhook down "
+              description: "sd service prom-alert-webhook down"
+          # service sub-system-a
+          - exp_labels:
+              severity: page
+              instance: 192.168.33.1:8081
+              job: application
+              ip_address: 192.168.33.1
+              application: sub-system-a
+              type: application
+            exp_annotations:
+              summary: "sd service sub-system-a down "
+              description: "sd service sub-system-a down"
+          # service sub-system-b
+          - exp_labels:
+              severity: page
+              instance: 192.168.33.1:8082
+              job: application
+              ip_address: 192.168.33.1
+              application: sub-system-b
+              type: application
+            exp_annotations:
+              summary: "sd service sub-system-b down "
+              description: "sd service sub-system-b down"
+    # Unit tests for promql expressions.
+    promql_expr_test:
+      # Unit test 1.
+      - expr: go_goroutines > 5
+        eval_time: 5m
+        exp_samples:
+          # Sample 1.
+          - labels: 'go_goroutines{instance="192.168.33.4:9090", ip_address="192.168.33.4", job="prometheus"}'
+            value:
+              70
+              # Unit test 1.
+      - expr: up > -1
+        eval_time: 7m
+        exp_samples:
+          # Sample 2.
+          - labels: 'up{instance="192.168.33.4:9090", ip_address="192.168.33.4", job="prometheus"}'
+            value: 0
 ```
 
 ### Grafana配置
@@ -202,9 +300,13 @@ tests:
 
 ### Alertmanager配置
 
-alertmanager.yml
+检查alertmanager配置文件
 
-`amtool check-config alertmanager.yml`检查alertmanager配置文件
+```bash
+docker run --rm -it --entrypoint='' -v "$PWD/alertmanager_conf:/etc/alertmanager_conf" prom/alertmanager:v0.21.0 amtool check-config /etc/alertmanager_conf/alertmanager.yml
+```
+
+alertmanager.yml
 
 ```yml
 global:
@@ -467,9 +569,147 @@ services:
 
 ```
 
-## 使用
+## Spring-boot 自定义指标
 
+可以在自己项目中暴露业务指标，然后Prometheus抓取指标存储到TSDB（Time series database）；  
+然后通过grafana定制自己的监控面板，还可以定制自己的业务告警规则，也可以在项目中通过HTTP API查询Prometheus数据作展示；
 
+依赖
+
+pom.xml （版本自己选择）
+
+```xml
+<!-- Spring boot actuator to expose metrics endpoint -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-actuator</artifactId>
+    <version>${spring-boot.version}</version>
+</dependency>
+<!-- Micormeter core dependecy  -->
+<dependency>
+    <groupId>io.micrometer</groupId>
+    <artifactId>micrometer-core</artifactId>
+    <version>${io.micrometer.version}</version>
+</dependency>
+<!-- Micrometer Prometheus registry  -->
+<dependency>
+    <groupId>io.micrometer</groupId>
+    <artifactId>micrometer-registry-prometheus</artifactId>
+    <version>${io.micrometer.version}</version>
+</dependency>
+```
+
+---
+
+> [common-application-properties-actuator](https://docs.spring.io/spring-boot/docs/current/reference/html/appendix-application-properties.html#common-application-properties-actuator)
+
+application.yml
+
+```yml
+management:
+  endpoint:
+    # 启用metrics端点
+    metrics.enabled: true
+    # 启用prometheus端点
+    prometheus.enabled: true
+  # 指标暴露到prometheus端点
+  metrics.export.prometheus.enabled: true
+  endpoints:
+    web:
+      exposure:
+        include:
+          #- 'health'
+          #- 'info'
+          #- 'metrics'
+          - 'prometheus'
+          #- 'heapdump'
+```
+---
+
+自定义业务指标
+
+[有四种类型的指标](https://prometheus.io/docs/concepts/metric_types/)
+
+|类型|说明|
+|:---|:---|
+|Counter|-|
+|Gauge|-|
+|Histogram|-|
+|Summary|-|
+
+test metrics
+
+```java
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+/**
+ * @author luxiang
+ * description  //自定义指标注册
+ * create       2021-04-29 11:06
+ */
+@Component
+public class CustomizeMetrics {
+
+    /**
+     * 应用名称
+     */
+    private String applicationName;
+
+    private MeterRegistry meterRegistry;
+
+    /**
+     * 计数器
+     */
+    private final Counter counter;
+
+    /**
+     * 状态
+     */
+    private double[] status = {1D};
+
+    /**
+     * 构造方法
+     * @param meterRegistry meter registry
+     * @param applicationName 应用名称
+     */
+    public CustomizeMetrics(MeterRegistry meterRegistry,
+                            @Value("${spring.application.name}") String applicationName) {
+        this.meterRegistry = meterRegistry;
+        this.applicationName = applicationName;
+        counter = Counter.builder("sd.count")
+                .tag("application", applicationName)
+                .description("计数器")
+                .register(meterRegistry);
+
+        Gauge.builder("sd.service.status", status, e -> e[0])
+                .tag("application", applicationName)
+                .description("服务状态 0停止 1启动")
+                .register(meterRegistry);
+    }
+
+    /**
+     * 处理计数器 +1
+     */
+    public void processCounter() {
+        counter.increment();
+    }
+
+    /**
+     * 改变状态 0->1 1->0
+     */
+    public void processStatus() {
+        if (status[0] == 0) {
+            status[0] = 1;
+        } else {
+            status[0] = 0;
+        }
+    }
+}
+```
 
 ## 参考
 

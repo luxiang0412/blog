@@ -456,7 +456,7 @@ logback-spring.xml
         </connectionStrategy>
 
         <!-- 重新连接延迟 -->
-        <reconnectionDelay>1 second</reconnectionDelay>
+        <reconnectionDelay>7 second</reconnectionDelay>
 
         <!-- 写入缓冲大小 -->
         <writeBufferSize>8192</writeBufferSize>
