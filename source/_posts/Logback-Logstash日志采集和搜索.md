@@ -26,6 +26,9 @@ tags:
 - [x-pack-5.5.0.tar.gz](https://gitee.com/luxiang0412/x-pack/attach_files/691768/download/x-pack-5.5.0.tar.gz)
 - [Kibana_Hanization.tar.gz](https://gitee.com/luxiang0412/x-pack/attach_files/691786/download/Kibana_Hanization.tar.gz)
 
+
+elasticsearch安装
+
 ```bash
 # 解压elasticsearch-5.5.0.tar.gz
 tar -zxvf elasticsearch-5.5.0.tar.gz -C /usr/local
@@ -205,7 +208,11 @@ curl -u 'elastic:111111' -XPUT http://localhost:9200/medcl1/ -d'
 }'
 
 curl -u 'elastic:111111' -XGET 'http://localhost:9200/medcl1/_analyze?text=%e5%88%98%e5%be%b7%e5%8d%8e+%e5%bc%a0%e5%ad%a6%e5%8f%8b+%e9%83%ad%e5%af%8c%e5%9f%8e+%e9%bb%8e%e6%98%8e+%e5%9b%9b%e5%a4%a7%e5%a4%a9%e7%8e%8b&analyzer=user_name_analyzer'
+```
 
+kibana安装
+
+```bash
 # 解压kibana
 tar -zxvf kibana-5.5.0-linux-x86_64.tar.gz -C /usr/local/
 
@@ -228,7 +235,11 @@ nohup /usr/local/kibana/bin/kibana >> /usr/local/kibana/kibana.log 2>&1 & echo $
 
 # 停止kibana
 pkill -F /usr/local/kibana/pid
+```
 
+logstash安装
+
+```bash
 # 解压logstash
 tar -zxvf logstash-5.5.0.tar.gz -C /usr/local/ && \
     ln -s /usr/local/logstash-5.5.0 logstash
@@ -333,6 +344,7 @@ input {
         codec => json_lines
     }
     
+    # 正式环境只需要一个TCP端口，多个logstash分布不同机器
     tcp {
         port => 4561
         codec => json_lines
@@ -341,16 +353,23 @@ input {
 output {
 
     elasticsearch {
+        # elasticsearch地址，这个是数组
         hosts => ["http://192.168.33.4:9200"]
+        # 索引的名称
         index => "logstash-%{+YYYY.MM.dd}"
+        # 索引模板名称
         template_name => "logstash"
+        # 索引模板json路径
         template => "/usr/local/logstash/config/elasticsearch-5x.json"
+        # 覆盖默认的模板
         template_overwrite => true
         manage_template => true
+        # elasticsearch 用户名
         user => "elastic"
+        # elasticsearch 密码
         password => "111111"
     }
-
+    # 正式环境注释掉，这个是输出到控制台
     stdout {
         codec => rubydebug
     }
@@ -423,6 +442,7 @@ logback-spring.xml
             <!-- 自定义字段 添加项目名称 -->
             <customFields>{"application_name": "${spring.application.name}"}</customFields>
             <includeContext>false</includeContext>
+            <includeCallerData>true</includeCallerData>
         </encoder>
 
         <!-- 空闲超时 -->
@@ -527,7 +547,7 @@ logback-spring.xml
         </filter>
     </appender>
 
-    <root level="DEBUG">
+    <root level="INFO">
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="FILE_INFO"/>
         <appender-ref ref="FILE_ERROR"/>
@@ -535,12 +555,10 @@ logback-spring.xml
     </root>
 
     <!--日志级别-->
-    <logger name="com.sd.gpfieldinit" level="DEBUG"/>
+    <logger name="com.sd.logcenter" level="INFO"/>
 
 </configuration> 
 ```
-
-## 使用
 
 ## 参考
 
