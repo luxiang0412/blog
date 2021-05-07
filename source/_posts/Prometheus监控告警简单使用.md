@@ -391,6 +391,10 @@ targets:
 
 ### Alertsnitch配置
 
+表模型
+
+![alertsnitch](alertsnitch.png)
+
 mysql-init.sql
 ```sql
 DROP PROCEDURE IF EXISTS bootstrap;
