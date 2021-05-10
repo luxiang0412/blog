@@ -560,6 +560,21 @@ logback-spring.xml
 </configuration> 
 ```
 
+## 常见问题
+
+- Logstash output Elasticsearch 索引时区问题
+- 不能自动创建索引
+    ```bash
+    PUT /_cluster/settings
+    {
+        "persistent" : {
+            "action": {
+            "auto_create_index": "true"
+            }
+        }
+    }
+    ```
+
 ## 参考
 
 - [Elasticsearch](https://www.elastic.co/guide/en/elasticsearch/reference/5.5/index.html)
